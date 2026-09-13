@@ -44,6 +44,17 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/ghostlock-app/**.gradle*','**/gradle-wrapper.properties') }}
 
+      - name: Set up Rust and Android target
+        run: |
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            source $HOME/.cargo/env
+          fi
+          rustup target add aarch64-linux-android
+          rustup target add armv7-linux-androideabi
+          rustc --version
+          cargo --version
+
       - name: Build APK
         env:
           JAVA_TOOL_OPTIONS: -Xmx3g
@@ -51,7 +62,6 @@ jobs:
           set -o pipefail
           cd ghostlock-app
           ./gradlew assembleDebug --no-daemon --stacktrace --warning-mode=all 2>&1 | tee build.log
-        continue-on-error: true
 
       - name: Upload build log
         if: always()
