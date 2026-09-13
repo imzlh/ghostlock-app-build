@@ -70,23 +70,22 @@ jobs:
           name: build-log
           path: ghostlock-app/build.log
 
+      - name: Find APK
+        if: always()
+        run: |
+          echo "=== Searching for APK files ==="
+          find ghostlock-app -name "*.apk" -type f || true
+          echo "=== Listing app/build/outputs ==="
+          find ghostlock-app/app/build/outputs -type f 2>/dev/null || echo "no outputs dir"
+          echo "=== Listing any build dirs ==="
+          find ghostlock-app -type d -name "outputs" 2>/dev/null || true
+
       - name: Create GitHub Release
-        if: success()
-        id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-build-${{ github.run_id }}
-          release_name: APK Build ${{ github.run_id }}
-          draft: false
-          prerelease: false
+          name: APK Build ${{ github.run_id }}
+          files: ghostlock-app/app/build/outputs/apk/**/*.apk
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload APK to Release
-        if: success()
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ghostlock-app/app/build/outputs/apk/debug/app-debug.apk
-          asset_name: app-debug.apk
-          asset_content_type: application/vnd.android.package-archive
